@@ -1,4 +1,4 @@
-package com.example.parcial2pc.ui.theme
+package com.ud.riddle.ui.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle

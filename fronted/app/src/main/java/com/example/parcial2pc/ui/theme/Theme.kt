@@ -1,4 +1,4 @@
-package com.example.parcial2pc.ui.theme
+package com.ud.riddle.ui.theme
 
 import android.app.Activity
 import android.os.Build
@@ -34,7 +34,7 @@ private val LightColorScheme = lightColorScheme(
 )
 
 @Composable
-fun Parcial2PCTheme(
+fun RiddleAppTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     // Dynamic color is available on Android 12+
     dynamicColor: Boolean = true,
