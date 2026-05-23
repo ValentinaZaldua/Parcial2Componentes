@@ -1,6 +1,7 @@
 package com.ud.riddle.repositories
 
 import com.ud.riddle.models.Goal
+import com.ud.riddle.models.GoalCreateRequest
 import com.ud.riddle.models.Member
 import com.ud.riddle.models.Payment
 import com.ud.riddle.service.SavingsApiService
@@ -8,8 +9,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 // Intermediario entre Retrofit (API) y el ViewModel.
-// El ViewModel nunca habla directo con Retrofit, siempre pasa por aquí.
-// Mismo patrón que GameDiscoveryRepository del proyecto base.
 class SavingsRepository(
     private val api: SavingsApiService = SavingsApiService.create()
 ) {
@@ -29,9 +28,13 @@ class SavingsRepository(
         catch (e: Exception) { Result.failure(e) }
     }
 
-    suspend fun createGoal(goal: Goal): Result<Goal> = withContext(Dispatchers.IO) {
-        try { Result.success(api.createGoal(goal)) }
-        catch (e: Exception) { Result.failure(e) }
+    suspend fun createGoal(request: GoalCreateRequest): Result<Goal> = withContext(Dispatchers.IO) {
+        try {
+            println("Creating goal request: $request")
+            Result.success(api.createGoal(request)) 
+        } catch (e: Exception) {
+            Result.failure(e) 
+        }
     }
 
     suspend fun addMember(member: Member): Result<Member> = withContext(Dispatchers.IO) {

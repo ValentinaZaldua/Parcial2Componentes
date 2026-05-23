@@ -36,6 +36,7 @@ fun PaymentScreen(
     viewModel: GoalViewModel = viewModel()
 ) {
     val goal by viewModel.selectedGoal.collectAsState()
+    val isSuccess by viewModel.paymentSuccess.collectAsState()
 
     var selectedMemberId by remember { mutableStateOf("") }
     var amount by remember { mutableStateOf("") }
@@ -48,6 +49,18 @@ fun PaymentScreen(
     var isLoading by remember { mutableStateOf(false) }
 
     LaunchedEffect(goalId) { viewModel.loadGoalDetail(goalId) }
+
+    // Reiniciar el estado de éxito al entrar a la pantalla
+    LaunchedEffect(Unit) {
+        viewModel.resetPaymentStatus()
+    }
+
+    // Reaccionar al éxito confirmado por el servidor
+    LaunchedEffect(isSuccess) {
+        if (isSuccess) {
+            onPaymentConfirmed()
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -138,7 +151,6 @@ fun PaymentScreen(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 isError = amountError,
                 supportingText = { if (amountError) Text("Ingresa un monto válido mayor a 0") },
-                textStyle = LocalTextStyle.current.copy(fontSize = 22.sp, fontWeight = FontWeight.SemiBold),
                 singleLine = true
             )
 
@@ -194,9 +206,6 @@ fun PaymentScreen(
                             description = description.trim()
                         )
                         viewModel.registerPayment(payment)
-                        // La navegación la maneja quien llama a esta screen
-                        // observando viewModel.paymentState si se implementa ese estado
-                        onPaymentConfirmed()
                     }
                 },
                 modifier = Modifier.fillMaxWidth().height(52.dp),

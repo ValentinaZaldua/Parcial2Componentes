@@ -3,6 +3,7 @@ package com.ud.riddle.viewmodels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ud.riddle.models.Goal
+import com.ud.riddle.models.GoalCreateRequest
 import com.ud.riddle.models.Member
 import com.ud.riddle.models.Payment
 import com.ud.riddle.models.states.GoalState
@@ -18,6 +19,12 @@ class GoalViewModel : ViewModel() {
 
     private val _uiState = MutableStateFlow<GoalState>(GoalState.Idle)
     val uiState: StateFlow<GoalState> = _uiState.asStateFlow()
+
+    private val _createGoalSuccess = MutableStateFlow(false)
+    val createGoalSuccess: StateFlow<Boolean> = _createGoalSuccess.asStateFlow()
+
+    private val _paymentSuccess = MutableStateFlow(false)
+    val paymentSuccess: StateFlow<Boolean> = _paymentSuccess.asStateFlow()
 
     private val _selectedGoal = MutableStateFlow<Goal?>(null)
     val selectedGoal: StateFlow<Goal?> = _selectedGoal.asStateFlow()
@@ -42,12 +49,20 @@ class GoalViewModel : ViewModel() {
         }
     }
 
-    fun createGoal(goal: Goal) {
+    fun createGoal(request: GoalCreateRequest) {
         viewModelScope.launch {
-            repository.createGoal(goal)
-                .onSuccess { loadGoals() }
+            _uiState.value = GoalState.Loading
+            repository.createGoal(request)
+                .onSuccess {
+                    loadGoals()
+                    _createGoalSuccess.value = true
+                }
                 .onFailure { _uiState.value = GoalState.Error(it.message ?: "Error al crear") }
         }
+    }
+
+    fun resetCreateGoalStatus() {
+        _createGoalSuccess.value = false
     }
 
     fun addMember(member: Member, goalId: String) {
@@ -62,13 +77,16 @@ class GoalViewModel : ViewModel() {
         viewModelScope.launch {
             repository.registerPayment(payment)
                 .onSuccess {
-                    // Recarga el detalle para actualizar el progreso y los totales
                     loadGoalDetail(payment.goalId)
-                    // Recarga la lista de pagos para que PaymentsListScreen se actualice
                     loadPaymentsForGoal(payment.goalId)
+                    _paymentSuccess.value = true
                 }
                 .onFailure { }
         }
+    }
+
+    fun resetPaymentStatus() {
+        _paymentSuccess.value = false
     }
 
     fun loadPaymentsForGoal(goalId: String) {

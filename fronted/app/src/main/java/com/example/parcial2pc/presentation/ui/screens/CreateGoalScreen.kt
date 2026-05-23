@@ -3,7 +3,6 @@ package com.example.parcial2pc.presentation.ui.screens
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -21,8 +20,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.ud.riddle.models.Goal
-import com.ud.riddle.models.Member
+import com.ud.riddle.models.GoalCreateRequest
 import com.ud.riddle.models.states.GoalState
 import com.ud.riddle.viewmodels.GoalViewModel
 
@@ -36,6 +34,7 @@ fun CreateGoalScreen(
     viewModel: GoalViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val isSuccess by viewModel.createGoalSuccess.collectAsState()
 
     var name by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
@@ -47,8 +46,14 @@ fun CreateGoalScreen(
     var nameError by remember { mutableStateOf(false) }
     var valueError by remember { mutableStateOf(false) }
 
-    LaunchedEffect(uiState) {
-        if (uiState is GoalState.Success) onGoalCreated()
+    // Reiniciar el estado de éxito al entrar a la pantalla
+    LaunchedEffect(Unit) {
+        viewModel.resetCreateGoalStatus()
+    }
+
+    // Reaccionar solo al éxito de creación
+    LaunchedEffect(isSuccess) {
+        if (isSuccess) onGoalCreated()
     }
 
     Scaffold(
@@ -206,16 +211,15 @@ fun CreateGoalScreen(
                     nameError = name.isBlank()
                     valueError = parsed <= 0.0
                     if (!nameError && !valueError) {
-                        val goal = Goal(
+                        val request = GoalCreateRequest(
                             name = name.trim(),
                             description = description.trim(),
                             totalValue = parsed,
                             targetDate = targetDate.trim(),
-                            imageUrl = imageUrl.trim().ifBlank { null }
+                            imageUrl = imageUrl.trim().ifBlank { null },
+                            members = memberNames.map { it.trim() }
                         )
-                        viewModel.createGoal(goal)
-                        // Agrega miembros si los hay (requiere el id de la meta creada,
-                        // idealmente se maneja en el ViewModel al recibir la respuesta del POST)
+                        viewModel.createGoal(request)
                     }
                 },
                 modifier = Modifier.fillMaxWidth().height(52.dp),
