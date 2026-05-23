@@ -38,18 +38,33 @@ app.get('/goals/:id', (req, res) => {
 
 // Crea una meta
 app.post('/goals', (req, res) => {
-  const { name, description, totalValue, targetDate, imageUrl } = req.body
+  const { name, description, totalValue, targetDate, imageUrl, membersReq } = req.body
   const goal = {
     id: getNextId(),
     name,
     description,
     totalValue,
     targetDate,
-    imageUrl: imageUrl || null
+    imageUrl: imageUrl || null,
+    members: []
   }
-  goals.push(goal)
+  goals.push(goal);
+
+  if (membersReq && Array.isArray(membersReq)) {
+    const newMembers = membersReq.map(m => {
+      const memberName = (typeof m === 'string') ? m : (m.name || "Sin nombre");
+      return { 
+        id: getNextId(), 
+        name: memberName, 
+        goalId: goal.id,
+        totalPaid: 0
+      };
+    });
+    members.push(...newMembers);
+  }
+  
   res.send(goal)
-})
+});
 
 // Agrega un miembro
 app.post('/members', (req, res) => {
