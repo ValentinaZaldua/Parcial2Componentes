@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ud.riddle.models.Goal
 import com.ud.riddle.models.Member
+import com.ud.riddle.models.Payment
 import com.ud.riddle.models.states.GoalState
 import com.ud.riddle.repositories.SavingsRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -11,8 +12,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-// Igual al GameViewModel del proyecto base.
-// La UI solo observa _uiState y _selectedGoal. Nunca ejecuta lógica aquí.
 class GoalViewModel : ViewModel() {
 
     private val repository = SavingsRepository()
@@ -23,7 +22,9 @@ class GoalViewModel : ViewModel() {
     private val _selectedGoal = MutableStateFlow<Goal?>(null)
     val selectedGoal: StateFlow<Goal?> = _selectedGoal.asStateFlow()
 
-    // Carga la lista de metas desde la API
+    private val _paymentsForGoal = MutableStateFlow<List<Payment>>(emptyList())
+    val paymentsForGoal: StateFlow<List<Payment>> = _paymentsForGoal.asStateFlow()
+
     fun loadGoals() {
         _uiState.value = GoalState.Loading
         viewModelScope.launch {
@@ -33,16 +34,14 @@ class GoalViewModel : ViewModel() {
         }
     }
 
-    // Carga el detalle de una meta específica
     fun loadGoalDetail(id: String) {
         viewModelScope.launch {
             repository.getGoalById(id)
                 .onSuccess { _selectedGoal.value = it }
-                .onFailure { /* manejar */ }
+                .onFailure { }
         }
     }
 
-    // Crea una nueva meta y recarga la lista
     fun createGoal(goal: Goal) {
         viewModelScope.launch {
             repository.createGoal(goal)
@@ -51,12 +50,32 @@ class GoalViewModel : ViewModel() {
         }
     }
 
-    // Agrega un miembro a una meta y recarga el detalle
     fun addMember(member: Member, goalId: String) {
         viewModelScope.launch {
             repository.addMember(member)
                 .onSuccess { loadGoalDetail(goalId) }
-                .onFailure { /* manejar */ }
+                .onFailure { }
+        }
+    }
+
+    fun registerPayment(payment: Payment) {
+        viewModelScope.launch {
+            repository.registerPayment(payment)
+                .onSuccess {
+                    // Recarga el detalle para actualizar el progreso y los totales
+                    loadGoalDetail(payment.goalId)
+                    // Recarga la lista de pagos para que PaymentsListScreen se actualice
+                    loadPaymentsForGoal(payment.goalId)
+                }
+                .onFailure { }
+        }
+    }
+
+    fun loadPaymentsForGoal(goalId: String) {
+        viewModelScope.launch {
+            repository.getPayments(goalId)
+                .onSuccess { _paymentsForGoal.value = it }
+                .onFailure { _paymentsForGoal.value = emptyList() }
         }
     }
 }
