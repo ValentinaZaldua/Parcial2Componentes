@@ -12,7 +12,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Parcial2PC">
         <activity
-            android:name=".MainActivity"
+            android:name="com.example.parcial2pc.presentation.ui.activities.MainActivity"
             android:exported="true"
             android:label="@string/app_name"
             android:theme="@style/Theme.Parcial2PC">
