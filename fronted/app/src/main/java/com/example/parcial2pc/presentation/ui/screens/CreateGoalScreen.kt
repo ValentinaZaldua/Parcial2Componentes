@@ -137,18 +137,47 @@ fun CreateGoalScreen(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // Fecha objetivo
+            // Fecha objetivo con calendario
+            var showDatePicker by remember { mutableStateOf(false) }
+            val datePickerState = rememberDatePickerState()
+
             Text("Fecha objetivo", fontSize = 14.sp, fontWeight = FontWeight.Medium)
             Spacer(modifier = Modifier.height(6.dp))
             OutlinedTextField(
                 value = targetDate,
-                onValueChange = { targetDate = it },
-                placeholder = { Text("2025-08-15") },
+                onValueChange = {},
+                readOnly = true,
+                placeholder = { Text("Seleccione una fecha") },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(10.dp),
-                trailingIcon = { Icon(Icons.Default.DateRange, contentDescription = null) },
+                trailingIcon = {
+                    IconButton(onClick = { showDatePicker = true }) {
+                        Icon(Icons.Default.DateRange, contentDescription = "Seleccionar fecha")
+                    }
+                },
                 singleLine = true
             )
+
+            // Diálogo del calendario
+            if (showDatePicker) {
+                DatePickerDialog(
+                    onDismissRequest = { showDatePicker = false },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            datePickerState.selectedDateMillis?.let { millis ->
+                                val sdf = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
+                                targetDate = sdf.format(java.util.Date(millis))
+                            }
+                            showDatePicker = false
+                        }) { Text("Aceptar") }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showDatePicker = false }) { Text("Cancelar") }
+                    }
+                ) {
+                    DatePicker(state = datePickerState)
+                }
+            }
 
             Spacer(modifier = Modifier.height(14.dp))
 

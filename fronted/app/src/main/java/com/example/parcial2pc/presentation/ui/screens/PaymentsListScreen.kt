@@ -40,10 +40,9 @@ fun PaymentsListScreen(
 
     LaunchedEffect(goalId) {
         viewModel.loadGoalDetail(goalId)
-        // Si el ViewModel expone paymentsForGoal, úsalo. Si no, carga aquí:
+        viewModel.loadPaymentsForGoal(goalId)
         isLoading = false
     }
-
     Scaffold(
         topBar = {
             TopAppBar(

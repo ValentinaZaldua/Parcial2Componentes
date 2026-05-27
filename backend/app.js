@@ -9,20 +9,16 @@ const port = 3000
 
 app.use(express.json())
 
-// Carpeta "recursos" es pública — el front puede pedir imágenes con GET
 app.use('/recursos', express.static('recursos'))
 
-// Configuración de multer — guarda la imagen en recursos/{goalId}/
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     const goalId = req.params.id
     const folder = `recursos/${goalId}`
-    // Crea la carpeta si no existe
     if (!fs.existsSync(folder)) fs.mkdirSync(folder, { recursive: true })
     cb(null, folder)
   },
   filename: (req, file, cb) => {
-    // Siempre se llama "image" + extensión original
     const ext = path.extname(file.originalname)
     cb(null, `image${ext}`)
   }
@@ -37,10 +33,13 @@ app.get('/', (req, res) => {
 
 app.get('/goals', (req, res) => {
   const result = goals.map(goal => {
-    const goalMembers = members.filter(m => m.goalId === goal.id)
-    const totalSaved = payments
-      .filter(p => p.goalId === goal.id)
-      .reduce((sum, p) => sum + p.amount, 0)
+    const goalMembers = members.filter(m => m.goalId === goal.id).map(member => {
+      const totalPaid = payments
+        .filter(p => p.goalId === goal.id && p.memberId === member.id)
+        .reduce((sum, p) => sum + p.amount, 0)
+      return { ...member, totalPaid }
+    })
+    const totalSaved = goalMembers.reduce((sum, m) => sum + m.totalPaid, 0)
     return { ...goal, members: goalMembers, totalSaved }
   })
   res.send(result)
@@ -50,38 +49,51 @@ app.get('/goals/:id', (req, res) => {
   const goal = goals.find(g => g.id === req.params.id)
   if (!goal) return res.status(404).send({ error: 'Meta no encontrada' })
 
-  const goalMembers = members.filter(m => m.goalId === goal.id)
-  const totalSaved = payments
-    .filter(p => p.goalId === goal.id)
-    .reduce((sum, p) => sum + p.amount, 0)
+  const goalMembers = members.filter(m => m.goalId === goal.id).map(member => {
+    const totalPaid = payments
+      .filter(p => p.goalId === goal.id && p.memberId === member.id)
+      .reduce((sum, p) => sum + p.amount, 0)
+    return { ...member, totalPaid }
+  })
 
+  const totalSaved = goalMembers.reduce((sum, m) => sum + m.totalPaid, 0)
   res.send({ ...goal, members: goalMembers, totalSaved })
 })
 
 app.post('/goals', (req, res) => {
-  const { name, description, totalValue, targetDate } = req.body
+  const { name, description, totalValue, targetDate, members: memberNames } = req.body
   const goal = {
     id: String(getNextId()),
     name,
     description,
     totalValue,
     targetDate,
-    imageUrl: null   // se sube después con el endpoint de imagen
+    imageUrl: null
   }
   goals.push(goal)
+
+  // Crea los miembros automáticamente junto con la meta
+  if (Array.isArray(memberNames)) {
+    memberNames.forEach(memberName => {
+      if (memberName && memberName.trim()) {
+        members.push({
+          id: String(getNextId()),
+          name: memberName.trim(),
+          goalId: goal.id
+        })
+      }
+    })
+  }
+
   res.send(goal)
 })
 
-// POST /goals/:id/image — sube la imagen de una meta
-// El front envía un multipart/form-data con campo "image"
 app.post('/goals/:id/image', upload.single('image'), (req, res) => {
   const goal = goals.find(g => g.id === req.params.id)
   if (!goal) return res.status(404).send({ error: 'Meta no encontrada' })
 
-  // Guarda la URL pública de la imagen en la meta
   const ext = path.extname(req.file.originalname)
-  goal.imageUrl = `http://192.168.20.33:3000/recursos/${req.params.id}/image${ext}`
-
+  goal.imageUrl = `http://10.135.103.93:3000/recursos/${req.params.id}/image${ext}`
   res.send({ imageUrl: goal.imageUrl })
 })
 
@@ -92,6 +104,10 @@ app.post('/members', (req, res) => {
   const member = { id: String(getNextId()), name, goalId }
   members.push(member)
   res.send(member)
+})
+
+app.get('/members', (req, res) => {
+  res.send(members)
 })
 
 // ── PAGOS ──────────────────────────────────────────

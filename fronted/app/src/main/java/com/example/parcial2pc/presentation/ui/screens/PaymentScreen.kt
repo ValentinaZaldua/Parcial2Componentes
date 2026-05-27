@@ -38,6 +38,8 @@ fun PaymentScreen(
     val goal by viewModel.selectedGoal.collectAsState()
     val isSuccess by viewModel.paymentSuccess.collectAsState()
 
+    val isGoalComplete = (goal?.totalSaved ?: 0.0) >= (goal?.totalValue ?: 1.0)
+
     var selectedMemberId by remember { mutableStateOf("") }
     var amount by remember { mutableStateOf("") }
     var selectedMethod by remember { mutableStateOf(PAYMENT_METHODS.first()) }
@@ -97,7 +99,16 @@ fun PaymentScreen(
                             modifier = Modifier.size(52.dp).clip(RoundedCornerShape(8.dp)).background(AppGreenDark),
                             contentAlignment = Alignment.Center
                         ) {
-                            Text(g.name.take(2).uppercase(), color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                            if (!g.imageUrl.isNullOrBlank()) {
+                                androidx.compose.foundation.Image(
+                                    painter = coil.compose.rememberAsyncImagePainter(g.imageUrl),
+                                    contentDescription = null,
+                                    contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                                    modifier = Modifier.fillMaxSize()
+                                )
+                            } else {
+                                Text(g.name.take(2).uppercase(), color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                            }
                         }
                         Spacer(modifier = Modifier.width(14.dp))
                         Column {
@@ -191,32 +202,54 @@ fun PaymentScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            Button(
-                onClick = {
-                    val parsed = amount.toDoubleOrNull() ?: 0.0
-                    memberError = selectedMemberId.isBlank()
-                    amountError = parsed <= 0.0
-                    if (!memberError && !amountError) {
-                        isLoading = true
-                        val payment = Payment(
-                            memberId = selectedMemberId,
-                            goalId = goalId,
-                            amount = parsed,
-                            method = selectedMethod,
-                            description = description.trim()
+            // Mensaje si la meta ya está completa
+            if (isGoalComplete) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(containerColor = AppGreen.copy(alpha = 0.1f))
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            "🎉 ¡Meta completada! No se permiten más aportes.",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = AppGreen
                         )
-                        viewModel.registerPayment(payment)
                     }
-                },
-                modifier = Modifier.fillMaxWidth().height(52.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = AppGreen),
-                enabled = !isLoading
-            ) {
-                if (isLoading) {
-                    CircularProgressIndicator(color = Color.White, modifier = Modifier.size(22.dp), strokeWidth = 2.dp)
-                } else {
-                    Text("Confirmar aporte", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                }
+            } else {
+                Button(
+                    onClick = {
+                        val parsed = amount.toDoubleOrNull() ?: 0.0
+                        memberError = selectedMemberId.isBlank()
+                        amountError = parsed <= 0.0
+                        if (!memberError && !amountError) {
+                            isLoading = true
+                            val payment = Payment(
+                                memberId = selectedMemberId,
+                                goalId = goalId,
+                                amount = parsed,
+                                method = selectedMethod,
+                                description = description.trim()
+                            )
+                            viewModel.registerPayment(payment)
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth().height(52.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = AppGreen),
+                    enabled = !isLoading
+                ) {
+                    if (isLoading) {
+                        CircularProgressIndicator(color = Color.White, modifier = Modifier.size(22.dp), strokeWidth = 2.dp)
+                    } else {
+                        Text("Confirmar aporte", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                    }
                 }
             }
 

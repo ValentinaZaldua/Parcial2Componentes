@@ -96,10 +96,29 @@ fun GoalDetailScreen(
                     Spacer(modifier = Modifier.width(16.dp))
                     // Placeholder imagen de la meta
                     Box(
-                        modifier = Modifier.size(80.dp).clip(RoundedCornerShape(10.dp)).background(Color.White.copy(alpha = 0.15f)),
+                        modifier = Modifier
+                            .size(80.dp)
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(Color.White.copy(alpha = 0.15f)),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(g.name.take(2).uppercase(), color = Color.White, fontWeight = FontWeight.Bold, fontSize = 22.sp)
+                        if (!g.imageUrl.isNullOrBlank()) {
+                            // Muestra la imagen real si existe
+                            androidx.compose.foundation.Image(
+                                painter = coil.compose.rememberAsyncImagePainter(g.imageUrl),
+                                contentDescription = "Imagen de la meta",
+                                contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        } else {
+                            // Iniciales si no hay imagen
+                            Text(
+                                g.name.take(2).uppercase(),
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 22.sp
+                            )
+                        }
                     }
                 }
             }

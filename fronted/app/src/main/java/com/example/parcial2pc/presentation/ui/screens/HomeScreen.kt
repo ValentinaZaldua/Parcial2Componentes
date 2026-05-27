@@ -112,10 +112,30 @@ private fun FeaturedGoalCard(goal: Goal, onClick: () -> Unit) {
         colors = CardDefaults.cardColors(containerColor = AppGreenDark)
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
-            Text(goal.name, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color.White)
-            Spacer(modifier = Modifier.height(4.dp))
-            Text("Meta", fontSize = 12.sp, color = Color.White.copy(alpha = 0.7f))
-            Text(formatMoney(goal.totalValue), fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Color.White)
+            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(goal.name, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text("Meta", fontSize = 12.sp, color = Color.White.copy(alpha = 0.7f))
+                    Text(formatMoney(goal.totalValue), fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                }
+                // Imagen o iniciales
+                Box(
+                    modifier = Modifier.size(70.dp).clip(RoundedCornerShape(10.dp)).background(Color.White.copy(alpha = 0.15f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (!goal.imageUrl.isNullOrBlank()) {
+                        androidx.compose.foundation.Image(
+                            painter = coil.compose.rememberAsyncImagePainter(goal.imageUrl),
+                            contentDescription = null,
+                            contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    } else {
+                        Text(goal.name.take(2).uppercase(), color = Color.White, fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                    }
+                }
+            }
             Spacer(modifier = Modifier.height(10.dp))
             Text("${formatMoney(goal.totalSaved)} / ${formatMoney(goal.totalValue)}", fontSize = 13.sp, color = Color.White.copy(alpha = 0.85f))
             Spacer(modifier = Modifier.height(8.dp))
@@ -146,7 +166,16 @@ private fun GoalRowCard(goal: Goal, onClick: () -> Unit) {
                 modifier = Modifier.size(44.dp).clip(RoundedCornerShape(8.dp)).background(AppGreen.copy(alpha = 0.15f)),
                 contentAlignment = Alignment.Center
             ) {
-                Text(goal.name.take(2).uppercase(), color = AppGreen, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                if (!goal.imageUrl.isNullOrBlank()) {
+                    androidx.compose.foundation.Image(
+                        painter = coil.compose.rememberAsyncImagePainter(goal.imageUrl),
+                        contentDescription = null,
+                        contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                } else {
+                    Text(goal.name.take(2).uppercase(), color = AppGreen, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                }
             }
             Spacer(modifier = Modifier.width(14.dp))
             Column(modifier = Modifier.weight(1f)) {
