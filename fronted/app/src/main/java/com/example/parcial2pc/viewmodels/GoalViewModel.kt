@@ -1,13 +1,13 @@
-package com.ud.riddle.viewmodels
+package com.example.parcial2pc.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.ud.riddle.models.Goal
-import com.ud.riddle.models.GoalCreateRequest
-import com.ud.riddle.models.Member
-import com.ud.riddle.models.Payment
-import com.ud.riddle.models.states.GoalState
-import com.ud.riddle.repositories.SavingsRepository
+import com.example.parcial2pc.models.Goal
+import com.example.parcial2pc.models.GoalCreateRequest
+import com.example.parcial2pc.models.Member
+import com.example.parcial2pc.models.Payment
+import com.example.parcial2pc.models.states.GoalState
+import com.example.parcial2pc.repositories.SavingsRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -32,6 +32,9 @@ class GoalViewModel : ViewModel() {
     private val _paymentsForGoal = MutableStateFlow<List<Payment>>(emptyList())
     val paymentsForGoal: StateFlow<List<Payment>> = _paymentsForGoal.asStateFlow()
 
+    // Imagen pendiente de subir tras crear la meta
+    var pendingImageFile: java.io.File? = null
+
     fun loadGoals() {
         _uiState.value = GoalState.Loading
         viewModelScope.launch {
@@ -53,7 +56,12 @@ class GoalViewModel : ViewModel() {
         viewModelScope.launch {
             _uiState.value = GoalState.Loading
             repository.createGoal(request)
-                .onSuccess {
+                .onSuccess { newGoal ->
+                    // Si hay imagen pendiente la sube automáticamente
+                    pendingImageFile?.let { file ->
+                        uploadImage(newGoal.id, file)
+                        pendingImageFile = null
+                    }
                     loadGoals()
                     _createGoalSuccess.value = true
                 }
@@ -94,6 +102,14 @@ class GoalViewModel : ViewModel() {
             repository.getPayments(goalId)
                 .onSuccess { _paymentsForGoal.value = it }
                 .onFailure { _paymentsForGoal.value = emptyList() }
+        }
+    }
+
+    fun uploadImage(goalId: String, imageFile: java.io.File) {
+        viewModelScope.launch {
+            repository.uploadImage(goalId, imageFile)
+                .onSuccess { loadGoals() }
+                .onFailure { }
         }
     }
 }
