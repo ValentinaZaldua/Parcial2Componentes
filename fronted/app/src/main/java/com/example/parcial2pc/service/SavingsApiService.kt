@@ -1,12 +1,18 @@
-package com.ud.riddle.service
+package com.example.parcial2pc.service
 
-import com.ud.riddle.models.Goal
-import com.ud.riddle.models.GoalCreateRequest
-import com.ud.riddle.models.Member
-import com.ud.riddle.models.Payment
+import com.example.parcial2pc.models.Goal
+import com.example.parcial2pc.models.GoalCreateRequest
+import com.example.parcial2pc.models.Member
+import com.example.parcial2pc.models.Payment
+import okhttp3.MultipartBody
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import retrofit2.http.*
+import retrofit2.http.Body
+import retrofit2.http.GET
+import retrofit2.http.Multipart
+import retrofit2.http.POST
+import retrofit2.http.Part
+import retrofit2.http.Path
 
 // Define todos los endpoints del backend.
 interface SavingsApiService {
@@ -29,8 +35,15 @@ interface SavingsApiService {
     @POST("payments")
     suspend fun registerPayment(@Body payment: Payment): Payment
 
+    @Multipart
+    @POST("goals/{id}/image")
+    suspend fun uploadGoalImage(
+        @Path("id") goalId: String,
+        @Part image: MultipartBody.Part
+    ): Goal
+
     companion object {
-        private const val BASE_URL = "http://10.0.2.2:3000/"
+        private const val BASE_URL = "http://192.168.20.33:3000/"
 
         fun create(): SavingsApiService {
             return Retrofit.Builder()
