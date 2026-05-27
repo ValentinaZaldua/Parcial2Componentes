@@ -43,7 +43,7 @@ interface SavingsApiService {
     ): Goal
 
     companion object {
-        private const val BASE_URL = "http://192.168.20.33:3000/"
+        private const val BASE_URL = "http://10.135.103.93:3000/"
 
         fun create(): SavingsApiService {
             return Retrofit.Builder()
