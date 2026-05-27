@@ -1,4 +1,4 @@
-package com.ud.riddle.ui.theme
+package com.example.parcial2pc.presentation.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
