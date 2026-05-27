@@ -16,15 +16,15 @@ import com.example.parcial2pc.presentation.ui.screens.GoalDetailScreen
 import com.example.parcial2pc.presentation.ui.screens.HomeScreen
 import com.example.parcial2pc.presentation.ui.screens.PaymentScreen
 import com.example.parcial2pc.presentation.ui.screens.PaymentsListScreen
-import com.ud.riddle.ui.theme.RiddleAppTheme
-import com.ud.riddle.viewmodels.GoalViewModel
+import com.example.parcial2pc.presentation.ui.theme.Parcial2PcTheme
+import com.example.parcial2pc.viewmodels.GoalViewModel
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            RiddleAppTheme {
+            Parcial2PcTheme {
                 AppNavigation()
             }
         }
