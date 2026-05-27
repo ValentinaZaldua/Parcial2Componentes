@@ -1,4 +1,4 @@
-package com.ud.riddle.models
+package com.example.parcial2pc.models
 
 // Representa un pago que hizo un miembro hacia una meta
 data class Payment(

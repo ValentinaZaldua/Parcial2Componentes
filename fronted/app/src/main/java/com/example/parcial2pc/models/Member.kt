@@ -1,4 +1,4 @@
-package com.ud.riddle.models
+package com.example.parcial2pc.models
 
 // Representa un integrante que aporta a una meta de ahorro
 data class Member(

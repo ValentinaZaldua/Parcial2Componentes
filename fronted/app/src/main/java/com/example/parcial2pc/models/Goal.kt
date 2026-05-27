@@ -1,4 +1,4 @@
-package com.ud.riddle.models
+package com.example.parcial2pc.models
 
 // Modelo que representa una meta de ahorro familiar.
 // totalSaved y members los calcula el backend y los incluye en la respuesta.
