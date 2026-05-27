@@ -1,5 +1,9 @@
 package com.example.parcial2pc.presentation.ui.screens
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -14,15 +18,18 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.ud.riddle.models.GoalCreateRequest
-import com.ud.riddle.models.states.GoalState
-import com.ud.riddle.viewmodels.GoalViewModel
+import coil.compose.rememberAsyncImagePainter
+import com.example.parcial2pc.models.GoalCreateRequest
+import com.example.parcial2pc.models.states.GoalState
+import com.example.parcial2pc.viewmodels.GoalViewModel
 
 private val AppGreen = Color(0xFF1DB954)
 
@@ -40,18 +47,21 @@ fun CreateGoalScreen(
     var description by remember { mutableStateOf("") }
     var totalValue by remember { mutableStateOf("") }
     var targetDate by remember { mutableStateOf("") }
-    var imageUrl by remember { mutableStateOf("") }
     var memberNames by remember { mutableStateOf(listOf<String>()) }
     var newMemberName by remember { mutableStateOf("") }
     var nameError by remember { mutableStateOf(false) }
     var valueError by remember { mutableStateOf(false) }
 
-    // Reiniciar el estado de éxito al entrar a la pantalla
+    val context = LocalContext.current
+    var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri -> selectedImageUri = uri }
+
     LaunchedEffect(Unit) {
         viewModel.resetCreateGoalStatus()
     }
 
-    // Reaccionar solo al éxito de creación
     LaunchedEffect(isSuccess) {
         if (isSuccess) onGoalCreated()
     }
@@ -145,14 +155,31 @@ fun CreateGoalScreen(
             // Imagen opcional
             Text("Imagen (opcional)", fontSize = 14.sp, fontWeight = FontWeight.Medium)
             Spacer(modifier = Modifier.height(6.dp))
-            OutlinedTextField(
-                value = imageUrl,
-                onValueChange = { imageUrl = it },
-                placeholder = { Text("https://...") },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(10.dp),
-                singleLine = true
-            )
+
+            if (selectedImageUri != null) {
+                Image(
+                    painter = rememberAsyncImagePainter(selectedImageUri),
+                    contentDescription = "Imagen seleccionada",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(160.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                TextButton(onClick = { selectedImageUri = null }) {
+                    Text("Quitar imagen", color = MaterialTheme.colorScheme.error)
+                }
+            } else {
+                OutlinedButton(
+                    onClick = { imagePickerLauncher.launch("image/*") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = null)
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("Seleccionar imagen")
+                }
+            }
 
             Spacer(modifier = Modifier.height(20.dp))
             HorizontalDivider(thickness = 0.5.dp, color = MaterialTheme.colorScheme.outlineVariant)
@@ -182,7 +209,9 @@ fun CreateGoalScreen(
                             newMemberName = ""
                         }
                     },
-                    modifier = Modifier.size(48.dp).border(1.dp, AppGreen, RoundedCornerShape(10.dp))
+                    modifier = Modifier
+                        .size(48.dp)
+                        .border(1.dp, AppGreen, RoundedCornerShape(10.dp))
                 ) {
                     Icon(Icons.Default.Add, contentDescription = "Agregar", tint = AppGreen)
                 }
@@ -190,14 +219,23 @@ fun CreateGoalScreen(
 
             if (memberNames.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(10.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
                     memberNames.forEach { m ->
                         InputChip(
                             selected = false,
                             onClick = { memberNames = memberNames.filter { it != m } },
                             label = { Text(m, fontSize = 13.sp) },
-                            colors = InputChipDefaults.inputChipColors(containerColor = AppGreen.copy(alpha = 0.1f)),
-                            border = InputChipDefaults.inputChipBorder(enabled = true, selected = false, borderColor = AppGreen.copy(alpha = 0.4f))
+                            colors = InputChipDefaults.inputChipColors(
+                                containerColor = AppGreen.copy(alpha = 0.1f)
+                            ),
+                            border = InputChipDefaults.inputChipBorder(
+                                enabled = true,
+                                selected = false,
+                                borderColor = AppGreen.copy(alpha = 0.4f)
+                            )
                         )
                     }
                 }
@@ -216,19 +254,33 @@ fun CreateGoalScreen(
                             description = description.trim(),
                             totalValue = parsed,
                             targetDate = targetDate.trim(),
-                            imageUrl = imageUrl.trim().ifBlank { null },
+                            imageUrl = null,
                             members = memberNames.map { it.trim() }
                         )
                         viewModel.createGoal(request)
+
+                        // Si hay imagen seleccionada la sube después de crear
+                        selectedImageUri?.let { uri ->
+                            val inputStream = context.contentResolver.openInputStream(uri)
+                            val tempFile = java.io.File(context.cacheDir, "goal_image.jpg")
+                            tempFile.outputStream().use { out -> inputStream?.copyTo(out) }
+                            viewModel.pendingImageFile = tempFile
+                        }
                     }
                 },
-                modifier = Modifier.fillMaxWidth().height(52.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = AppGreen),
                 enabled = uiState !is GoalState.Loading
             ) {
                 if (uiState is GoalState.Loading) {
-                    CircularProgressIndicator(color = Color.White, modifier = Modifier.size(22.dp), strokeWidth = 2.dp)
+                    CircularProgressIndicator(
+                        color = Color.White,
+                        modifier = Modifier.size(22.dp),
+                        strokeWidth = 2.dp
+                    )
                 } else {
                     Text("Crear meta", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
                 }

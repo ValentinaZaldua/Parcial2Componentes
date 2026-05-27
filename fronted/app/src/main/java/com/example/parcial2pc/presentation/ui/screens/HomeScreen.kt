@@ -19,9 +19,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.ud.riddle.models.Goal
-import com.ud.riddle.models.states.GoalState
-import com.ud.riddle.viewmodels.GoalViewModel
+import com.example.parcial2pc.models.Goal
+import com.example.parcial2pc.models.states.GoalState
+import com.example.parcial2pc.viewmodels.GoalViewModel
 
 private val AppGreen = Color(0xFF1DB954)
 private val AppGreenDark = Color(0xFF158a3e)
