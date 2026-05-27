@@ -1,12 +1,16 @@
-package com.ud.riddle.repositories
+package com.example.parcial2pc.repositories
 
-import com.ud.riddle.models.Goal
-import com.ud.riddle.models.GoalCreateRequest
-import com.ud.riddle.models.Member
-import com.ud.riddle.models.Payment
-import com.ud.riddle.service.SavingsApiService
+import com.example.parcial2pc.models.Goal
+import com.example.parcial2pc.models.GoalCreateRequest
+import com.example.parcial2pc.models.Member
+import com.example.parcial2pc.models.Payment
+import com.example.parcial2pc.service.SavingsApiService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.io.File
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.asRequestBody
 
 // Intermediario entre Retrofit (API) y el ViewModel.
 class SavingsRepository(
@@ -45,5 +49,15 @@ class SavingsRepository(
     suspend fun registerPayment(payment: Payment): Result<Payment> = withContext(Dispatchers.IO) {
         try { Result.success(api.registerPayment(payment)) }
         catch (e: Exception) { Result.failure(e) }
+    }
+
+    suspend fun uploadImage(goalId: String, imageFile: File): Result<Goal> = withContext(Dispatchers.IO) {
+        try {
+            val requestFile = imageFile.asRequestBody("image/*".toMediaType())
+            val body = MultipartBody.Part.createFormData("image", imageFile.name, requestFile)
+            Result.success(api.uploadGoalImage(goalId, body))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 }
